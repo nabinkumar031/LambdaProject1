@@ -1,24 +1,19 @@
 package com.lululemon.lambda.fullsync;
 
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.lululemon.lambda.fullsync.pojo.S3EventWithContext;
-import com.lululemon.lambda.fullsync.util.LuluUtil;
+import com.lululemon.lambda.fullsync.pojo.S3EventForEfs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 @Slf4j
 @Component
-public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
+public class NedappFullSyncConsumer implements Consumer<S3EventForEfs> {
     private final S3Client s3Client;
     private final String strEFSPath;
 
@@ -28,23 +23,7 @@ public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
     }
 
     @Override
-    public void accept(S3EventWithContext s3Event) {
-        //            S3EventObj eventObj = new S3EventObj(event);
-//            String srcBucket = eventObj.getSourceBucket();
-//            String key = eventObj.getKey();
-//            lambdaLogger.log("srcBucket: "+srcBucket);
-//
-//            S3EventNotification.S3EventNotificationRecord record=eventObj.getRecord();
-//            lambdaLogger.log("srcBucket1: "+srcBucket);
-//
-//            String tempKey = key.replace('+', ' ');
-//            tempKey = URLDecoder.decode(key, "UTF-8");
-//
-//            lambdaLogger.log("tempKey: "+tempKey);
-//
-//            AmazonS3 s3Client = new AmazonS3Client();
-
-//
+    public void accept(S3EventForEfs s3Event) {
         try (FileOutputStream efsFileOutputStream = new FileOutputStream(createEfsFile(s3Event), false)) {
             efsFileOutputStream.write(readObjectFromEvent(s3Event));
             log.info(s3Event.formattedTrace());
@@ -54,14 +33,14 @@ public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
         }
     }
 
-    private byte[] readObjectFromEvent(S3EventWithContext s3Event) {
+    private byte[] readObjectFromEvent(S3EventForEfs s3Event) {
         return s3Client.getObjectAsBytes(requestBuilder -> requestBuilder
                         .bucket(s3Event.sourceBucket())
                         .key(s3Event.key()))
                 .asByteArray();
     }
 
-    private File createEfsFile(S3EventWithContext s3Event) throws IOException {
+    private File createEfsFile(S3EventForEfs s3Event) throws IOException {
         String efsFullPath = strEFSPath + s3Event.key();
         s3Event.append("efsFullPath:", efsFullPath);
         File efsFile = new File(efsFullPath);

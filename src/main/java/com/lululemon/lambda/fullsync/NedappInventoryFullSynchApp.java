@@ -31,15 +31,6 @@ public class NedappInventoryFullSynchApp {
 				.build();
 	}
 
-	@Bean
-	public Consumer<S3Event> consumeEvents() {
-		return event -> {
-			event.getRecords().stream().findFirst().ifPresent(record -> {
-
-			});
-		};
-	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(NedappInventoryFullSynchApp.class, args);
 	}

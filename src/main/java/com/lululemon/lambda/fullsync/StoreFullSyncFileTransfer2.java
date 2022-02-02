@@ -7,7 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.lambda.runtime.events.models.s3.S3EventNotification;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.lululemon.lambda.fullsync.pojo.S3EventWithContext;
+import com.lululemon.lambda.fullsync.pojo.S3EventForEfs;
 import com.lululemon.lambda.fullsync.util.LuluUtil;
 
 
@@ -31,7 +31,7 @@ public class StoreFullSyncFileTransfer2 implements RequestHandler< S3Event, Stri
         String strEFSPath=System.getenv("EFS_FOLDER_PATH");
 
         try {
-            S3EventWithContext eventObj = new S3EventWithContext(event, context);
+            S3EventForEfs eventObj = new S3EventForEfs(event);
             String srcBucket = eventObj.getSourceBucket();
             String key = eventObj.getKey();
             lambdaLogger.log("srcBucket: "+srcBucket);
