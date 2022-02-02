@@ -4,7 +4,11 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.lululemon.lambda.fullsync.pojo.S3EventWithContext;
 import com.lululemon.lambda.fullsync.util.LuluUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,11 +17,12 @@ import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 @Slf4j
+@Component
 public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
     private final S3Client s3Client;
     private final String strEFSPath;
 
-    public NedappFullSyncConsumer(S3Client s3Client, String strEFSPath1) {
+    public NedappFullSyncConsumer(S3Client s3Client, @Value("#{System.getenv(\"EFS_FOLDER_PATH\")}") String strEFSPath1) {
         this.s3Client = s3Client;
         this.strEFSPath = strEFSPath1;
     }
@@ -41,14 +46,19 @@ public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
 
 //
         try (FileOutputStream efsFileOutputStream = new FileOutputStream(createEfsFile(s3Event), false)) {
-            String sFileContent = s3Client.get(srcBucket, tempKey);
-            efsFileOutputStream.write(sFileContent.getBytes(Charset.forName("UTF-8")));
-
-            s3Event.context().getLogger().log(s3Event.formattedTrace());
+            efsFileOutputStream.write(readObjectFromEvent(s3Event));
+            log.info(s3Event.formattedTrace());
         } catch (IOException e) {
             s3Event.append("Error", e.getMessage());
             log.error(s3Event.formattedTrace(), e);
         }
+    }
+
+    private byte[] readObjectFromEvent(S3EventWithContext s3Event) {
+        return s3Client.getObjectAsBytes(requestBuilder -> requestBuilder
+                        .bucket(s3Event.sourceBucket())
+                        .key(s3Event.key()))
+                .asByteArray();
     }
 
     private File createEfsFile(S3EventWithContext s3Event) throws IOException {
@@ -59,14 +69,14 @@ public class NedappFullSyncConsumer implements Consumer<S3EventWithContext> {
         return efsFile;
     }
 
-    private String createLogEntry(LambdaLogger lambdaLogger, String srcBucket, String key, String efsFullPath) {
-        StringBuilder sBuilder = new StringBuilder(PIPE).append(FULL_SYNC_S3_EFS)
-                .append(PIPE);
-        LuluUtil.appendEntity(sBuilder, "SrcBucket", srcBucket);
-        LuluUtil.appendEntity(sBuilder, "SrcFile", key);
-        LuluUtil.appendEntity(sBuilder, "EFSFile", efsFullPath);
-        lambdaLogger.log(sBuilder.toString());
-
-    }
+//    private String createLogEntry(LambdaLogger lambdaLogger, String srcBucket, String key, String efsFullPath) {
+//        StringBuilder sBuilder = new StringBuilder(PIPE).append(FULL_SYNC_S3_EFS)
+//                .append(PIPE);
+//        LuluUtil.appendEntity(sBuilder, "SrcBucket", srcBucket);
+//        LuluUtil.appendEntity(sBuilder, "SrcFile", key);
+//        LuluUtil.appendEntity(sBuilder, "EFSFile", efsFullPath);
+//        lambdaLogger.log(sBuilder.toString());
+//
+//    }
 
 }

@@ -15,12 +15,10 @@ public class S3EventWithContext {
     private S3Event s3Event;
     private S3EventNotification.S3EventNotificationRecord record;
     private final String key;
-    private final Context context;
     private final StringBuilder trace;
 
-    public S3EventWithContext(S3Event event, Context context) {
+    public S3EventWithContext(S3Event event) {
         this.trace = new StringBuilder(FULL_SYNC_S_3_EFS);
-        this.context = context;
         this.s3Event = event;
         this.record=event.getRecords().get(0);
         this.sourceBucket = record.getS3().getBucket().getName();
