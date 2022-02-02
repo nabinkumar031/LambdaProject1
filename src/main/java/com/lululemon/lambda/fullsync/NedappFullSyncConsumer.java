@@ -39,6 +39,9 @@ public class NedappFullSyncConsumer implements Consumer<S3EventForEfs> {
     }
 
     private File createEfsFile(S3EventForEfs s3Event) throws IOException {
+        if (strEFSPath == null ) {
+            throw new IOException("Invalid efs mount path");
+        }
         String efsFullPath = strEFSPath + s3Event.key();
         s3Event.append("efsFullPath:", efsFullPath);
         File efsFile = new File(efsFullPath);

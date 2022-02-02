@@ -22,7 +22,7 @@ public class NedappInventoryFullSynchApp {
 
 	@Bean
 	public Consumer<S3Event> nedappFullSyncConsumer(S3Client s3Client,
-													@Value("#{System.getenv(\"EFS_FOLDER_PATH\")}") String strEFSPath1){
+													@Value("#{environment.EFS_FOLDER_PATH}") String strEFSPath1){
 		var consumer = new NedappFullSyncConsumer(s3Client, strEFSPath1);
 		return s3Event -> {
 			try {
